@@ -1,0 +1,154 @@
+name: App
+
+attributes:
+  ORGANIZATIONNAME: Picos LLC.
+
+configs:
+  Development: debug
+  Staging: release
+  Release: release
+
+options:
+  defaultConfig: Release
+  usesTabs: false
+  indentWidth: 2
+  tabWidth: 2 
+  groupSortPosition: top
+  carthageExecutablePath: mint run carthage
+
+settings:
+  base:
+    CODE_SIGN_STYLE: Automatic
+    DEVELOPMENT_TEAM: R7YY29B6T8
+    IPHONEOS_DEPLOYMENT_TARGET: 13.0
+    SWIFT_VERSION: 5.0
+    FRAMEWORK_SEARCH_PATHS:
+    - $(inherited)
+    - $(PROJECT_DIR)/Carthage/Build/iOS
+    SWIFT_COMPILATION_MODE: wholemodule
+    DEBUG_INFORMATION_FORMAT: dwarf-with-dsym
+    MTL_FAST_MATH: YES
+    MTL_ENABLE_DEBUG_INFO: NO
+    ENABLE_NS_ASSERTIONS: NO
+  configs:   
+    Development:
+      CODE_SIGN_IDENTITY: iPhone Developer
+      SWIFT_ACTIVE_COMPILATION_CONDITIONS: DEVELOPMENT      
+      SWIFT_OPTIMIZATION_LEVEL: -Onone
+      VALIDATE_PRODUCT: YES
+      MTL_ENABLE_DEBUG_INFO: INCLUDE_SOURCE
+      ENABLE_NS_ASSERTIONS: YES
+    Staging:
+      CODE_SIGN_IDENTITY: iPhone Distribution
+      SWIFT_ACTIVE_COMPILATION_CONDITIONS: STAGING
+      SWIFT_OPTIMIZATION_LEVEL: -O
+      VALIDATE_PRODUCT: YES
+    Release:
+      CODE_SIGN_IDENTITY: iPhone Distribution
+      SWIFT_ACTIVE_COMPILATION_CONDITIONS: RELEASE
+      SWIFT_OPTIMIZATION_LEVEL: -O
+
+targets:
+  App:
+    type: application
+    platform: iOS
+    sources:
+    - path: App
+    dependencies:
+    - carthage: Alamofire
+    settings:
+      base:
+        MARKETING_VERSION: 0.0.1
+        CURRENT_PROJECT_VERSION: 1
+        TARGETED_DEVICE_FAMILY: 1,2
+        PRODUCT_NAME: $(TARGET_NAME)$(DISPLAY_NAME_SUFFIX)
+      configs:
+        Development:
+          DISPLAY_NAME_SUFFIX: _dev
+          INFOPLIST_FILE: App/Assets/Info.plist
+          PRODUCT_BUNDLE_IDENTIFIER: com.yusuga.App.dev
+          SWIFT_ACTIVE_COMPILATION_CONDITIONS: DEVELOPMENT
+        Staging:
+          DISPLAY_NAME_SUFFIX: _stg
+          INFOPLIST_FILE: App/Assets/Info.plist
+          PRODUCT_BUNDLE_IDENTIFIER: com.yusuga.App.stg
+          SWIFT_ACTIVE_COMPILATION_CONDITIONS: STAGING
+        Release:
+          DISPLAY_NAME_SUFFIX: 
+          INFOPLIST_FILE: App/Assets/Info.plist
+          PRODUCT_BUNDLE_IDENTIFIER: com.yusuga.App
+          SWIFT_ACTIVE_COMPILATION_CONDITIONS: RELEASE
+    postbuildScripts:
+    - name: SwiftLint
+      script: |
+              if mint which swiftlint >/dev/null; then
+                mint run swiftlint --strict
+              else
+                echo "warning: SwiftLint not installed, download from https://github.com/realm/SwiftLint"
+              fi
+
+  AppTests:
+    type: bundle.unit-test
+    platform: iOS
+    sources:
+    - path: AppTests
+    dependencies:
+    - target: App
+    - carthage: Quick
+    - carthage: Nimble
+    settings:
+      base:
+        PRODUCT_BUNDLE_IDENTIFIER: com.yusuga.AppTests
+        INFOPLIST_FILE: AppTests/Info.plist
+        TEST_HOST: $(BUILT_PRODUCTS_DIR)/App_dev.app/App_dev
+        BUNDLE_LOADER: $(TEST_HOST)
+
+schemes:
+  App:
+    build: 
+      targets: 
+        App: all 
+    run:
+      config: Release
+    test:
+      config: Release
+    profile: 
+      config: Release
+    analyze:
+      config: Release
+    archive: 
+      config: Release
+
+  App_stg:
+    build: 
+      targets: 
+        App: all 
+    run:
+      config: Staging
+    test:
+      config: Staging
+    profile: 
+      config: Staging
+    analyze:
+      config: Staging
+    archive: 
+      config: Staging
+  App_dev:
+    build: 
+      targets: 
+        App: all 
+        AppTests: [test]
+    run:
+      config: Development
+    test:
+      config: Development
+      targets:
+      - name: AppTests
+        parallelizable: true
+        randomExecutionOrder: true
+    profile: 
+      config: Development
+    analyze:
+      config: Development
+    archive: 
+      config: Development

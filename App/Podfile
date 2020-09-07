@@ -1,0 +1,13 @@
+platform :ios, '13.0'
+
+target 'App' do
+  use_frameworks!
+
+  pod 'SwiftyJSON', '~> 5.0'
+
+  # Unit test
+
+  target 'AppTests' do
+    inherit! :search_paths
+  end
+end

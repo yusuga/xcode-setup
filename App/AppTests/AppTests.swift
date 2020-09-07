@@ -7,7 +7,9 @@
 //
 
 import XCTest
-@testable import App
+@testable import App_dev
+import Quick
+import Nimble
 
 class AppTests: XCTestCase {
 

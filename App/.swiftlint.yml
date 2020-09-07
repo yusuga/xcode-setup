@@ -1,0 +1,46 @@
+included:
+  - App/
+
+opt_in_rules:
+  - implicit_return # 暗黙のreturnを優先する
+  - indentation_width
+
+indentation_width:
+  indentation_width: 2
+  include_comments: false
+
+trailing_whitespace:
+  ignores_empty_lines: true # 空行のスペースを許可
+ 
+type_name:
+  max_length: 100
+
+identifier_name:
+  min_length:
+    warning: 1
+  max_length:
+    warning: 100
+  allowed_symbols: '_'
+  validates_start_with_lowercase: false
+ 
+large_tuple:
+  warning: 4
+
+nesting:
+  type_level: # 型のネストの深さ
+    warning: 5
+
+implicit_return:
+  included: [closure] # closuerのみ有効
+
+disabled_rules:
+  - trailing_comma
+  - file_length
+  - line_length
+  - type_body_length
+  - function_body_length
+  - function_parameter_count # 関数のパラメータ数制限
+  - cyclomatic_complexity # 関数内の複雑性(ネストが深いifやifの連続)
+  - no_fallthrough_only # fallthroughは1つ以上のstatementが必要
+  - orphaned_doc_comment # doc commentは宣言でのみ使用可能
+  - todo # TODOをwarningにする
