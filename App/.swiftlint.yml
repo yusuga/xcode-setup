@@ -4,6 +4,16 @@ included:
 opt_in_rules:
   - implicit_return # 暗黙のreturnを優先する
   - indentation_width
+  - force_unwrapping
+  - attributes # 宣言属性は宣言と異なる行で定義する
+  - explicit_init # 明示的なinitの呼び出しを禁止
+  - number_separator # 大きな数値はセパレータを使用する（ex. 1_000_000）
+  - object_literal # オブジェクトリテラルの使用を優先
+  - operator_usage_whitespace # 演算子の前後にはスペースが必要
+  - overridden_super_call # overrideしている関数はsuperを必ず呼ぶ
+  - private_outlet # @IBOutletは必ずprivate
+  - prohibited_super_call # いくつかの関数でsuperの呼び出しを禁止
+  - redundant_nil_coalescing # `foo ?? nil` は冗長なので禁止
 
 indentation_width:
   indentation_width: 2
