@@ -18,7 +18,7 @@ setup-uses-cache:
 
 .PHONY: setup-tools
 setup-tools:
-	brew bundle --no-upgrade
+	brew bundle --no-upgrade --no-lock
 	mint bootstrap
 	bundle install --gemfile ${GEMFILE_PATH}
 
