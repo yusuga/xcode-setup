@@ -15,7 +15,7 @@ USES_CACHE := false
 .PHONY: generate-asset-files generate-xcodeproj open 
 .PHONY: clean
 
-#default: setup
+default: setup
 
 setup:
 	${make} setup-tools
