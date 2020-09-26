@@ -1,56 +1,61 @@
-PRODUCT_NAME := App
-# https://stackoverflow.com/a/23324703
+APP_NAME := App
+
 DIR := $(shell dirname $(realpath $(firstword $(MAKEFILE_LIST))))
+MAKEFILE_PATH := ${DIR}/Makefile
+MINTFILE_PATH := ${DIR}/Mintfile
 GEMFILE_PATH := ${DIR}/../Gemfile
+
+make := make -f ${MAKEFILE_PATH}
+mint-run := mint run -m ${MINTFILE_PATH}
+
 USES_CACHE := false
 
-.PHONY: setup
+.PHONY: setup setup-uses-cache 
+.PHONY: setup-tools setup-carthage setup-cocoapods 
+.PHONY: generate-asset-files generate-xcodeproj open 
+.PHONY: clean
+
+#default: setup
+
 setup:
-	make setup-tools
-	make generate-asset-files
-	make setup-carthage
-	make generate-xcodeproj
-	make open-xcode
+	${make} setup-tools
+	${make} generate-asset-files
+	${make} setup-carthage
+	${make} generate-xcodeproj
+	${make} open
 
-.PHONY: setup-uses-cache
 setup-uses-cache:
-	make setup USES_CACHE=true
+	${make} setup USES_CACHE=true
 
-.PHONY: setup-tools
 setup-tools:
-	brew bundle --no-upgrade --no-lock
-	mint bootstrap
+	brew bundle --no-upgrade --no-lock --file ${DIR}/Brewfile
+	mint bootstrap -m ${MINTFILE_PATH}
 	bundle install --gemfile ${GEMFILE_PATH}
 
-.PHONY: setup-carthage
 setup-carthage:
 ifeq ($(USES_CACHE),true)
-	mint run carthage bootstrap --platform iOS --no-use-binaries --cache-builds
+	${mint-run} carthage bootstrap --platform iOS --no-use-binaries --cache-builds
 else
-	mint run carthage bootstrap --platform iOS --no-use-binaries
+	${mint-run} carthage bootstrap --platform iOS --no-use-binaries
 endif
 
-.PHONY: setup-cocoapods
 setup-cocoapods:
-	bundle exec --gemfile ${GEMFILE_PATH} pod install
+	bundle exec --gemfile ${GEMFILE_PATH} \
+      pod install --project-directory=${DIR}
 
-.PHONY: generate-asset-files
 generate-asset-files:
-	mint run swiftgen
+	${mint-run} swiftgen config run --config ${DIR}/swiftgen.yml
 
-.PHONY: generate-xcodeproj
 generate-xcodeproj:
-	mint run xcodegen
-	make setup-cocoapods # Xcodeプロジェクトが生成された後に実行する必要がある
+	${mint-run} xcodegen -s ${DIR}/project.yml
+	${make} setup-cocoapods # Xcodeプロジェクトが生成された後に実行する必要がある
 
-.PHONY: open-xcode
-open-xcode:
-	open ${DIR}/${PRODUCT_NAME}.xcworkspace
+open:
+	open ${DIR}/${APP_NAME}.xcworkspace
 
-.PHONY: reset
-reset:
+clean:
 	rm -rf ${DIR}/../vendor
-	rm -rf ${DIR}/${PRODUCT_NAME}.xcodeproj	
-	rm -rf ${DIR}/${PRODUCT_NAME}.xcworkspace
+	rm -rf ${DIR}/${APP_NAME}.xcodeproj	
+	rm -rf ${DIR}/${APP_NAME}.xcworkspace
 	rm -rf ${DIR}/Carthage
 	rm -rf ${DIR}/Pods
