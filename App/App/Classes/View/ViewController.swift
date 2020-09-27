@@ -7,7 +7,8 @@
 //
 
 import UIKit
-import Alamofire
+import SwiftyUserDefaults
+import SwiftyJSON
 
 class ViewController: UIViewController {
 

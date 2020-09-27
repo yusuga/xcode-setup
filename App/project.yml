@@ -55,7 +55,7 @@ targets:
     sources:
     - path: App
     dependencies:
-    - carthage: Alamofire
+    - carthage: SwiftyUserDefaults
     settings:
       base:
         MARKETING_VERSION: 0.0.1
@@ -94,7 +94,6 @@ targets:
     - path: AppTests
     dependencies:
     - target: App
-    - carthage: Quick
     - carthage: Nimble
     settings:
       base:

@@ -1,3 +1,2 @@
-github "Alamofire/Alamofire" "5.2.2"
 github "Quick/Nimble" "v8.1.2"
-github "Quick/Quick" "v2.2.1"
+github "sunshinejr/SwiftyUserDefaults" "5.0.0"
