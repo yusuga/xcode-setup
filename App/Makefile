@@ -7,6 +7,7 @@ GEMFILE_PATH := ${DIR}/../Gemfile
 
 make := make -f ${MAKEFILE_PATH}
 mint-run := mint run -m ${MINTFILE_PATH}
+bundle-exec := bundle exec --gemfile ${GEMFILE_PATH}
 
 USES_CACHE := false
 
@@ -40,8 +41,7 @@ else
 endif
 
 setup-cocoapods:
-	bundle exec --gemfile ${GEMFILE_PATH} \
-      pod install --project-directory=${DIR}
+	${bundle-exec} pod install --project-directory=${DIR}
 
 generate-asset-files:
 	${mint-run} swiftgen config run --config ${DIR}/swiftgen.yml
