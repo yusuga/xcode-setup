@@ -35,8 +35,6 @@ commands:
       - run: 
           command: make git-submodule
           working_directory: App
-      - run: ls -l
-      - run: ls -l App
       - persist_to_workspace:
           root: .
           paths:
@@ -116,7 +114,7 @@ commands:
           paths:
             - App/Pods
             - App/App.xcworkspace
-  build_deploy_ios_app:
+  build_app:
     steps:
       - checkout
       - attach_workspace:
@@ -149,7 +147,7 @@ jobs:
   release_development:
     executor: macos_executor
     steps:
-      - build_deploy_ios_app
+      - build_app
 
 workflows:
   version: 2
