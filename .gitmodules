@@ -1,0 +1,3 @@
+[submodule "App/tools/Mint"]
+	path = App/tools/Mint
+	url = git@github.com:yonaskolb/Mint.git

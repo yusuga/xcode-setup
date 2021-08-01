@@ -14,9 +14,9 @@ GID := $(shell id -g root)
 COCOAPODS_IMAGE_TAG := 1.10.1
 
 make := make -f ${MAKEFILE_PATH}
-make_mint := make -f ${DIR}/tools/Mint/Makefile -C ${DIR}/tools/Mint
+make-mint := make -f ${DIR}/tools/Mint/Makefile -C ${DIR}/tools/Mint
 mint := MINT_PATH=${MINT_PATH} ${MINT_EXECUTABLE_FILE_PATH}
-mint_run := ${mint} run --mintfile ${MINTFILE_PATH}
+mint-run := ${mint} run --mintfile ${MINTFILE_PATH}
 pod := docker run \
 		--rm \
 		-v ${DIR}:/local \
@@ -27,14 +27,15 @@ pod := docker run \
 
 .PHONY: app app-using-cache 
 .PHONY: git-submodule mint carthage cocoapods 
-.PHONY: asset-files xcodeproj open 
-.PHONY: clean
+.PHONY: asset-files xcodeproj xcworkspace open 
+.PHONY: clean clean-tools clean-client clean-client-caches
+.PHONY: _update-carthage _update-cocoapods
 
 default: app
 
 app:
 	${make} git-submodule
-	${make} tools
+	${make} mint
 	${make} asset-files
 	${make} carthage
 	${make} xcworkspace
@@ -47,7 +48,7 @@ git-submodule:
 	git submodule update --init --recursive
 
 mint:
-	if [ ! -f "${MINT_EXECUTABLE_FILE_PATH}" ]; then ${make_mint} build; fi;
+	if [ ! -f "${MINT_EXECUTABLE_FILE_PATH}" ]; then ${make-mint} build; fi;
 	${mint} bootstrap --mintfile ${MINTFILE_PATH}
 
 carthage:
@@ -58,7 +59,7 @@ else
 endif
 
 cocoapods:
-	${pod} install --project-directory=${DIR}
+	${pod} install
 
 asset-files:
 	${mint-run} swiftgen config run --config ${DIR}/swiftgen.yml
@@ -88,8 +89,8 @@ clean-client:
 	rm -rf ${MAKEFILE_DIR}/Pods
 
 clean-client-caches:
-	find ${HOME}/Library/Developer/Xcode/DerivedData/ \
-		-name ${PRODUCT_NAME}"*" \
+	find ${HOME}/Library/Developer/Xcode/DerivedData \
+		-name ${APP_NAME}"*" \
 		-maxdepth 1 \
 		-print \
 		-type d \
@@ -101,7 +102,7 @@ ifndef L
 	@echo "make _update-carthage L=<ライブラリ名を指定してください>"
 	@exit 1
 endif
-	${mint_run} carthage update --use-ssh --no-build $(L)
+	${mint-run} carthage update --use-ssh --no-build $(L)
 	${make} app-using-cache
 
 _update-cocoapods:
@@ -109,4 +110,4 @@ ifndef L
 	@echo "make _update-cocoapods L=<ライブラリ名を指定してください>"
 	@exit 1
 endif
-	${pod} update --project-directory=${DIR} ${L}
+	${pod} update
