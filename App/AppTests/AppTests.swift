@@ -8,28 +8,18 @@
 
 import XCTest
 @testable import App_dev
-import Nimble
+import Quick
 
-class AppTests: XCTestCase {
+class AppSpec: QuickSpec {
+  override func spec() {
+    describe("the 'Documentation' directory") {
+      it("has everything you need to get started") {
+      }
 
-    override func setUpWithError() throws {
-        // Put setup code here. This method is called before the invocation of each test method in the class.
-    }
-
-    override func tearDownWithError() throws {
-        // Put teardown code here. This method is called after the invocation of each test method in the class.
-    }
-
-    func testExample() throws {
-        // This is an example of a functional test case.
-        // Use XCTAssert and related functions to verify your tests produce the correct results.
-    }
-
-    func testPerformanceExample() throws {
-        // This is an example of a performance test case.
-        self.measure {
-            // Put the code you want to measure the time of here.
+      context("if it doesn't have what you're looking for") {
+        it("needs to be updated") {
         }
+      }
     }
-
+  }
 }

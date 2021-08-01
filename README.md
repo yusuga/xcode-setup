@@ -1,6 +1,10 @@
 # xcode-setup
 
-# Required tools
+## Requirements
+
+- Xcode 12.5.1 (12E507)
+
+## Required tools
 
 - [Homebrew](https://brew.sh/index_ja)
 - [bundler](https://rubygems.org/gems/bundler/versions/1.11.2): 2.0.2
@@ -20,7 +24,7 @@ bundler
 └─ CocoaPods
 ```
 
-# Usage
+## Usage
 
 ```sh
 git clone git@github.com:yusuga/xcode-setup.git

@@ -1,7 +1,7 @@
 name: App
 
 attributes:
-  ORGANIZATIONNAME: Picos LLC.
+  ORGANIZATIONNAME: yusuga.com
 
 configs:
   Development: debug
@@ -33,7 +33,7 @@ settings:
   configs:   
     Development:
       CODE_SIGN_IDENTITY: iPhone Developer
-      SWIFT_ACTIVE_COMPILATION_CONDITIONS: DEVELOPMENT      
+      SWIFT_ACTIVE_COMPILATION_CONDITIONS: DEVELOPMENT
       SWIFT_OPTIMIZATION_LEVEL: -Onone
       VALIDATE_PRODUCT: YES
       MTL_ENABLE_DEBUG_INFO: INCLUDE_SOURCE
@@ -48,6 +48,14 @@ settings:
       SWIFT_ACTIVE_COMPILATION_CONDITIONS: RELEASE
       SWIFT_OPTIMIZATION_LEVEL: -O
 
+packages:
+  Alamofire:
+    url: https://github.com/Alamofire/Alamofire
+    version: 5.4.3
+  Quick:
+    url: https://github.com/Quick/Quick
+    version: 4.0.0
+
 targets:
   App:
     type: application
@@ -55,7 +63,8 @@ targets:
     sources:
     - path: App
     dependencies:
-    - carthage: SwiftyUserDefaults
+    - package: Alamofire
+    - framework: "Carthage/Build/SwiftyUserDefaults.xcframework"
     settings:
       base:
         MARKETING_VERSION: 0.0.1
@@ -94,7 +103,7 @@ targets:
     - path: AppTests
     dependencies:
     - target: App
-    - carthage: Nimble
+    - package: Quick
     settings:
       base:
         PRODUCT_BUNDLE_IDENTIFIER: com.yusuga.AppTests
@@ -104,35 +113,6 @@ targets:
 
 schemes:
   App:
-    build: 
-      targets: 
-        App: all 
-    run:
-      config: Release
-    test:
-      config: Release
-    profile: 
-      config: Release
-    analyze:
-      config: Release
-    archive: 
-      config: Release
-
-  App_stg:
-    build: 
-      targets: 
-        App: all 
-    run:
-      config: Staging
-    test:
-      config: Staging
-    profile: 
-      config: Staging
-    analyze:
-      config: Staging
-    archive: 
-      config: Staging
-  App_dev:
     build: 
       targets: 
         App: all 

@@ -9,46 +9,46 @@ make := make -f ${MAKEFILE_PATH}
 mint-run := mint run -m ${MINTFILE_PATH}
 bundle-exec := bundle exec --gemfile ${GEMFILE_PATH}
 
-USES_CACHE := false
+USE_CACHE := false
 
-.PHONY: setup setup-uses-cache 
-.PHONY: setup-tools setup-carthage setup-cocoapods 
-.PHONY: generate-asset-files generate-xcodeproj open 
+.PHONY: app app-using-cache 
+.PHONY: tools carthage cocoapods 
+.PHONY: asset-files xcodeproj open 
 .PHONY: clean
 
-default: setup
+default: app
 
-setup:
-	${make} setup-tools
-	${make} generate-asset-files
-	${make} setup-carthage
-	${make} generate-xcodeproj
+app:
+	${make} tools
+	${make} asset-files
+	${make} carthage
+	${make} xcodeproj
 	${make} open
 
-setup-uses-cache:
-	${make} setup USES_CACHE=true
+app-using-cache:
+	${make} app USE_CACHE=true
 
-setup-tools:
+tools:
 	brew bundle --no-upgrade --no-lock --file ${DIR}/Brewfile
 	mint bootstrap -m ${MINTFILE_PATH}
 	bundle install --gemfile ${GEMFILE_PATH}
 
-setup-carthage:
-ifeq ($(USES_CACHE),true)
-	${mint-run} carthage bootstrap --platform iOS --no-use-binaries --cache-builds
+carthage:
+ifeq ($(USE_CACHE),true)
+	${mint-run} carthage bootstrap --platform iOS --no-use-binaries --use-xcframeworks --cache-builds
 else
-	${mint-run} carthage bootstrap --platform iOS --no-use-binaries
+	${mint-run} carthage bootstrap --platform iOS --no-use-binaries --use-xcframeworks
 endif
 
-setup-cocoapods:
+cocoapods:
 	${bundle-exec} pod install --project-directory=${DIR}
 
-generate-asset-files:
+asset-files:
 	${mint-run} swiftgen config run --config ${DIR}/swiftgen.yml
 
-generate-xcodeproj:
+xcodeproj:
 	${mint-run} xcodegen -s ${DIR}/project.yml
-	${make} setup-cocoapods # Xcodeプロジェクトが生成された後に実行する必要がある
+	${make} cocoapods # Xcodeプロジェクトが生成された後に実行する必要がある
 
 open:
 	open ${DIR}/${APP_NAME}.xcworkspace
@@ -59,3 +59,18 @@ clean:
 	rm -rf ${DIR}/${APP_NAME}.xcworkspace
 	rm -rf ${DIR}/Carthage
 	rm -rf ${DIR}/Pods
+
+_update-carthage:
+ifndef L
+	@echo "make _update-carthage L=<ライブラリ名を指定してください>"
+	@exit 1
+endif
+	${mint_run} carthage update --use-ssh --no-build $(L)
+	${make} app-using-cache
+
+_update-cocoapods:
+ifndef L
+	@echo "make _update-cocoapods L=<ライブラリ名を指定してください>"
+	@exit 1
+endif
+	${pod} update ${L}
