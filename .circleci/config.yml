@@ -35,12 +35,10 @@ commands:
       - run: 
           command: make git-submodule
           working_directory: App
-      - run: ls -l
-      - run: ls -l App
       - persist_to_workspace:
           root: .
           paths:
-            - App/tools
+            - App/Mint
   make_app_dependencies:
     steps:
       - checkout
@@ -48,7 +46,7 @@ commands:
           at: .
       - restore_cache:
           name: Restoring mint
-          key: 1-mint-{{ .Environment.CACHE_VERSION }}-{{ checksum "App/tools/Mint/CHANGELOG.md" }}
+          key: 1-mint-{{ .Environment.CACHE_VERSION }}-{{ checksum "App/Mint/CHANGELOG.md" }}
       - restore_cache:
           name: Restoring mintfile
           key: 1-mintfile-{{ .Environment.CACHE_VERSION }}-{{ checksum "App/Mintfile" }}
@@ -57,9 +55,9 @@ commands:
           working_directory: App
       - save_cache:
           name: Saving mint
-          key: 1-mint-{{ .Environment.CACHE_VERSION }}-{{ checksum "App/tools/Mint/CHANGELOG.md" }}
+          key: 1-mint-{{ .Environment.CACHE_VERSION }}-{{ checksum "App/Mint/CHANGELOG.md" }}
           paths:
-            - App/tools/Mint/.build/apple/Products/Release/mint
+            - App/Mint/.build/apple/Products/Release/mint
       - save_cache:
           name: Saving mintfile
           key: 1-mintfile-{{ .Environment.CACHE_VERSION }}-{{ checksum "App/Mintfile" }}
@@ -85,7 +83,7 @@ commands:
       - persist_to_workspace:
           root: .
           paths:
-            - App/tools
+            - App/Mint
             - App/.mint
             - App/Carthage/Build
             - App/App/Assets/Assets.swift
@@ -102,9 +100,10 @@ commands:
           command: make cocoapods
           working_directory: App
       - run:
-          # Permission deniedを解決するために必要
+          # Required to resolve `Permission denied` for persist_to_workspace.
           command: |
             sudo chown -R circleci Pods
+            sudo chown -R circleci App.xcodeproj
             sudo chown -R circleci App.xcworkspace
           working_directory: App          
       - save_cache:
@@ -115,8 +114,9 @@ commands:
           root: .
           paths:
             - App/Pods
+            - App/App.xcodeproj
             - App/App.xcworkspace
-  build_deploy_ios_app:
+  build_app:
     steps:
       - checkout
       - attach_workspace:
@@ -125,7 +125,6 @@ commands:
           name: add github ip addresses to known hosts
           command: for ip in $(dig @8.8.8.8 github.com +short); do ssh-keyscan github.com,$ip; ssh-keyscan $ip; done 2>/dev/null >> ~/.ssh/known_hosts
       - run:
-          name: build .ipa
           command: bundle exec fastlane build
           no_output_timeout: 1h
 
@@ -149,7 +148,7 @@ jobs:
   release_development:
     executor: macos_executor
     steps:
-      - build_deploy_ios_app
+      - build_app
 
 workflows:
   version: 2

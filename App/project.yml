@@ -14,7 +14,7 @@ options:
   indentWidth: 2
   tabWidth: 2 
   groupSortPosition: top
-  carthageExecutablePath: mint run carthage
+  carthageExecutablePath: Mint/.build/apple/Products/Release/mint run carthage
 
 settings:
   base:
@@ -44,7 +44,9 @@ settings:
       SWIFT_OPTIMIZATION_LEVEL: -O
       VALIDATE_PRODUCT: YES
     Release:
+      CODE_SIGN_STYLE: Manual
       CODE_SIGN_IDENTITY: iPhone Distribution
+      PROVISIONING_PROFILE_SPECIFIER: match AppStore com.yusuga.App
       SWIFT_ACTIVE_COMPILATION_CONDITIONS: RELEASE
       SWIFT_OPTIMIZATION_LEVEL: -O
 
@@ -90,8 +92,8 @@ targets:
     postbuildScripts:
     - name: SwiftLint
       script: |
-              if mint which swiftlint >/dev/null; then
-                mint run swiftlint --strict
+              if Mint/.build/apple/Products/Release/mint which swiftlint >/dev/null; then
+                Mint/.build/apple/Products/Release/mint run swiftlint --strict
               else
                 echo "warning: SwiftLint not installed, download from https://github.com/realm/SwiftLint"
               fi

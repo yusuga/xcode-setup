@@ -1,8 +1,26 @@
 default_platform(:ios)
 
 platform :ios do
-  desc "Push a new beta build to TestFlight"
+  before_all do
+    setup_circle_ci
+  end
+  
+  desc "Build"
   lane :build do
-    build_app(workspace: "App.xcworkspace", scheme: "App")
+    match(
+      type: 'appstore',
+      git_url: 'git@github.com:yusuga/certificates.git',
+      app_identifier: "com.yusuga.App",
+      readonly: true
+    )
+    
+    build_app(
+      workspace: "App/App.xcworkspace",
+      scheme: "App",
+      configuration: "Release",
+      codesigning_identity: "Apple Distribution: Yu Sugawara (R7YY29B6T8)",
+      clean: true,
+      disable_xcpretty: true
+    )
   end
 end
