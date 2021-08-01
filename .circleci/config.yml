@@ -1,0 +1,189 @@
+version: 2.1
+executors:
+  macos_executor:
+    macos:
+      xcode: "12.5.1"
+    environment:
+      LC_ALL: en_US.UTF-8
+      LANG: en_US.UTF-8
+    shell: /bin/bash --login -eo pipefail
+  machine_executor:
+    machine:
+      image: ubuntu-2004:202010-01
+
+commands:
+  resolve_gem:
+    steps:
+      - checkout
+      - restore_cache:
+          name: Restoring gem
+          key: gem-{{ .Environment.CACHE_VERSION }}-{{ checksum "Gemfile.lock" }}
+      - run:
+          command: make check-gem || make gem
+      - save_cache:
+          name: Saving gem
+          key: gem-{{ .Environment.CACHE_VERSION }}-{{ checksum "Gemfile.lock" }}
+          paths:
+            - vendor/bundle
+      - persist_to_workspace:
+          root: .
+          paths:
+            - vendor/bundle
+  resolve_git_submodule:
+    steps:
+      - checkout
+      - run: 
+          command: make git-submodule
+          working_directory: App
+      - run: ls -l
+      - run: ls -l App
+      - persist_to_workspace:
+          root: .
+          paths:
+            - App/tools
+  make_app_dependencies:
+    steps:
+      - checkout
+      - attach_workspace:
+          at: .
+      - restore_cache:
+          name: Restoring mint
+          key: 1-mint-{{ .Environment.CACHE_VERSION }}-{{ checksum "App/tools/Mint/CHANGELOG.md" }}
+      - restore_cache:
+          name: Restoring mintfile
+          key: 1-mintfile-{{ .Environment.CACHE_VERSION }}-{{ checksum "App/Mintfile" }}
+      - run:
+          command: make mint
+          working_directory: App
+      - save_cache:
+          name: Saving mint
+          key: 1-mint-{{ .Environment.CACHE_VERSION }}-{{ checksum "App/tools/Mint/CHANGELOG.md" }}
+          paths:
+            - App/tools/Mint/.build/apple/Products/Release/mint
+      - save_cache:
+          name: Saving mintfile
+          key: 1-mintfile-{{ .Environment.CACHE_VERSION }}-{{ checksum "App/Mintfile" }}
+          paths:
+            - App/.mint
+      - restore_cache:
+          name: Restoring Carthage
+          key: carthage-build-{{ .Environment.CACHE_VERSION }}-{{ checksum "App/Cartfile.resolved" }}
+      - run:
+          command: make carthage USE_CACHE=true
+          working_directory: App
+          no_output_timeout: 1h
+      - save_cache:
+          key: carthage-build-{{ .Environment.CACHE_VERSION }}-{{ checksum "App/Cartfile.resolved" }}
+          paths:
+            - App/Carthage/Build
+      - run:
+          command: make asset-files
+          working_directory: App
+      - run:
+          command: make xcodeproj
+          working_directory: App
+      - persist_to_workspace:
+          root: .
+          paths:
+            - App/tools
+            - App/.mint
+            - App/Carthage/Build
+            - App/App/Assets/Assets.swift
+            - App/App.xcodeproj
+  make_cocoapods:
+    steps:
+      - checkout
+      - attach_workspace:
+          at: .
+      - restore_cache:
+          name: Restoring CocoaPods
+          key: pod-build-{{ .Environment.CACHE_VERSION }}-{{ checksum "App/Podfile.lock" }}
+      - run:
+          command: make cocoapods
+          working_directory: App
+      - run:
+          # Permission deniedを解決するために必要
+          command: |
+            sudo chown -R circleci Pods
+            sudo chown -R circleci App.xcworkspace
+          working_directory: App          
+      - save_cache:
+          key: pod-build-{{ .Environment.CACHE_VERSION }}-{{ checksum "App/Podfile.lock" }}
+          paths:
+            - App/Pods
+      - persist_to_workspace:
+          root: .
+          paths:
+            - App/Pods
+            - App/App.xcworkspace
+  build_deploy_ios_app:
+    steps:
+      - checkout
+      - attach_workspace:
+          at: .
+      - run:
+          name: add github ip addresses to known hosts
+          command: for ip in $(dig @8.8.8.8 github.com +short); do ssh-keyscan github.com,$ip; ssh-keyscan $ip; done 2>/dev/null >> ~/.ssh/known_hosts
+      - run:
+          name: build .ipa
+          command: bundle exec fastlane build
+          no_output_timeout: 1h
+
+jobs:
+  resolve_deploy_tools:
+    executor: macos_executor
+    steps:
+      - resolve_gem
+  resolve_git_submodule:
+    executor: machine_executor
+    steps:
+      - resolve_git_submodule
+  resolve_app_dependencies_on_macos:
+    executor: macos_executor
+    steps:
+      - make_app_dependencies
+  resolve_app_dependencies_on_docker:
+    executor: machine_executor
+    steps:
+      - make_cocoapods
+  release_development:
+    executor: macos_executor
+    steps:
+      - build_deploy_ios_app
+
+workflows:
+  version: 2
+  test_and_release:
+    jobs:
+      - resolve_deploy_tools:
+          filters:
+            branches:
+              only:
+                - master
+      - resolve_git_submodule:
+          filters:
+            branches:
+              only:
+                - master
+      - resolve_app_dependencies_on_macos:
+          filters:
+            branches:
+              only:
+                - master
+          requires:
+            - resolve_git_submodule
+      - resolve_app_dependencies_on_docker:
+          filters:
+            branches:
+              only:
+                - master
+          requires:
+            - resolve_app_dependencies_on_macos
+      - release_development:
+          filters:
+            branches:
+              only:
+                - master
+          requires:
+            - resolve_deploy_tools
+            - resolve_app_dependencies_on_docker

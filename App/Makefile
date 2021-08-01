@@ -30,6 +30,7 @@ pod := docker run \
 .PHONY: asset-files xcodeproj xcworkspace open 
 .PHONY: clean clean-tools clean-client clean-client-caches
 .PHONY: _update-carthage _update-cocoapods
+.PHONY: _init-fastlane
 
 default: app
 
@@ -111,3 +112,6 @@ ifndef L
 	@exit 1
 endif
 	${pod} update
+
+_init-fastlane:
+	bundle exec --gemfile ${DIR}/../Gemfile fastlane init
