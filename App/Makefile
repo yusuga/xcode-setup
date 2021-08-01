@@ -3,35 +3,52 @@ APP_NAME := App
 DIR := $(shell dirname $(realpath $(firstword $(MAKEFILE_LIST))))
 MAKEFILE_PATH := ${DIR}/Makefile
 MINTFILE_PATH := ${DIR}/Mintfile
-GEMFILE_PATH := ${DIR}/../Gemfile
-
-make := make -f ${MAKEFILE_PATH}
-mint-run := mint run -m ${MINTFILE_PATH}
-bundle-exec := bundle exec --gemfile ${GEMFILE_PATH}
-
+MINT_PATH := ${DIR}/.mint/lib
+MINT_EXECUTABLE_FILE_PATH := ${DIR}/tools/Mint/.build/apple/Products/Release/mint
 USE_CACHE := false
 
+UID := $(shell id -u root)
+GID := $(shell id -g root)
+
+# https://hub.docker.com/r/renovate/cocoapods
+COCOAPODS_IMAGE_TAG := 1.10.1
+
+make := make -f ${MAKEFILE_PATH}
+make_mint := make -f ${DIR}/tools/Mint/Makefile -C ${DIR}/tools/Mint
+mint := MINT_PATH=${MINT_PATH} ${MINT_EXECUTABLE_FILE_PATH}
+mint_run := ${mint} run --mintfile ${MINTFILE_PATH}
+pod := docker run \
+		--rm \
+		-v ${DIR}:/local \
+		-w /local \
+		-u $(UID):$(GID) \
+		renovate/cocoapods:${COCOAPODS_IMAGE_TAG} \
+			pod --allow-root
+
 .PHONY: app app-using-cache 
-.PHONY: tools carthage cocoapods 
+.PHONY: git-submodule mint carthage cocoapods 
 .PHONY: asset-files xcodeproj open 
 .PHONY: clean
 
 default: app
 
 app:
+	${make} git-submodule
 	${make} tools
 	${make} asset-files
 	${make} carthage
-	${make} xcodeproj
+	${make} xcworkspace
 	${make} open
 
 app-using-cache:
 	${make} app USE_CACHE=true
 
-tools:
-	brew bundle --no-upgrade --no-lock --file ${DIR}/Brewfile
-	mint bootstrap -m ${MINTFILE_PATH}
-	bundle install --gemfile ${GEMFILE_PATH}
+git-submodule:
+	git submodule update --init --recursive
+
+mint:
+	if [ ! -f "${MINT_EXECUTABLE_FILE_PATH}" ]; then ${make_mint} build; fi;
+	${mint} bootstrap --mintfile ${MINTFILE_PATH}
 
 carthage:
 ifeq ($(USE_CACHE),true)
@@ -41,24 +58,43 @@ else
 endif
 
 cocoapods:
-	${bundle-exec} pod install --project-directory=${DIR}
+	${pod} install --project-directory=${DIR}
 
 asset-files:
 	${mint-run} swiftgen config run --config ${DIR}/swiftgen.yml
 
 xcodeproj:
 	${mint-run} xcodegen -s ${DIR}/project.yml
+
+xcworkspace:
+	${make} xcodeproj
 	${make} cocoapods # Xcodeプロジェクトが生成された後に実行する必要がある
 
 open:
 	open ${DIR}/${APP_NAME}.xcworkspace
 
 clean:
-	rm -rf ${DIR}/../vendor
-	rm -rf ${DIR}/${APP_NAME}.xcodeproj	
-	rm -rf ${DIR}/${APP_NAME}.xcworkspace
-	rm -rf ${DIR}/Carthage
-	rm -rf ${DIR}/Pods
+	${make} clean-tools
+	${make} clean-client
+	${make} clean-client-caches
+
+clean-tools:
+	rm -rf ${MAKEFILE_DIR}/.mint
+
+clean-client:
+	rm -rf ${MAKEFILE_DIR}/${PRODUCT_NAME}.xcodeproj
+	rm -rf ${MAKEFILE_DIR}/${PRODUCT_NAME}.xcworkspace
+	rm -rf ${MAKEFILE_DIR}/Carthage
+	rm -rf ${MAKEFILE_DIR}/Pods
+
+clean-client-caches:
+	find ${HOME}/Library/Developer/Xcode/DerivedData/ \
+		-name ${PRODUCT_NAME}"*" \
+		-maxdepth 1 \
+		-print \
+		-type d \
+		-exec \
+			rm -rf {} \;
 
 _update-carthage:
 ifndef L
@@ -73,4 +109,4 @@ ifndef L
 	@echo "make _update-cocoapods L=<ライブラリ名を指定してください>"
 	@exit 1
 endif
-	${pod} update ${L}
+	${pod} update --project-directory=${DIR} ${L}
