@@ -94,17 +94,33 @@ commands:
       - attach_workspace:
           at: .
       - restore_cache:
+          name: Restoring gem
+          key: app-gem-{{ .Environment.CACHE_VERSION }}-{{ checksum "App/Gemfile.lock" }}
+      - run:
+          command: make gem
+          working_directory: App
+      - save_cache:
+          name: Saving gem
+          key: app-gem-{{ .Environment.CACHE_VERSION }}-{{ checksum "App/Gemfile.lock" }}
+          paths:
+            - App/vendor/bundle
+      - restore_cache:
           name: Restoring CocoaPods
           key: pod-build-{{ .Environment.CACHE_VERSION }}-{{ checksum "App/Podfile.lock" }}
       - run:
           command: make cocoapods
           working_directory: App
+      - run: ls -l App
       - run:
           # Permission deniedを解決するために必要
           command: |
             sudo chown -R circleci Pods
+            sudo chown -R circleci App.xcodeproj
             sudo chown -R circleci App.xcworkspace
-          working_directory: App          
+          working_directory: App
+      - run: ls -l App/Pods
+      - run: ls -l App/Pods/Pods.xcodeproj
+      - run: cat App/Pods/Pods.xcodeproj/project.pbxproj
       - save_cache:
           key: pod-build-{{ .Environment.CACHE_VERSION }}-{{ checksum "App/Podfile.lock" }}
           paths:
@@ -113,12 +129,14 @@ commands:
           root: .
           paths:
             - App/Pods
+            - App/App.xcodeproj
             - App/App.xcworkspace
   build_app:
     steps:
       - checkout
       - attach_workspace:
           at: .
+      - run: cat App/App.xcodeproj/project.pbxproj
       - run:
           name: add github ip addresses to known hosts
           command: for ip in $(dig @8.8.8.8 github.com +short); do ssh-keyscan github.com,$ip; ssh-keyscan $ip; done 2>/dev/null >> ~/.ssh/known_hosts

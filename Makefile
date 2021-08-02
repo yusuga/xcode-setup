@@ -1,5 +1,5 @@
-MAKEFILE_DIR := $(shell dirname $(realpath $(firstword $(MAKEFILE_LIST))))
-GEMFILE_PATH := ${MAKEFILE_DIR}/Gemfile
+DIR := $(shell dirname $(realpath $(firstword $(MAKEFILE_LIST))))
+GEMFILE_PATH := ${DIR}/Gemfile
 
 .PHONY: gem check-gem
 .PHONY: clean
@@ -14,7 +14,7 @@ check-gem:
 	bundle check --gemfile ${GEMFILE_PATH}
 	
 clean:
-	rm -rf ${MAKEFILE_DIR}/vendor
+	rm -rf ${DIR}/vendor
 
 _update-gem:
 	bundle update --gemfile ${GEMFILE_PATH}
