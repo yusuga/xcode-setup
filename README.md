@@ -4,14 +4,17 @@
 
 - Xcode 12.5.1 (12E507)
 
-**Dependences**
+## Dependences
 
 ```
-Mint
+Mint (in project directory)
 ├─ Carthage
 ├─ xcodegen
 ├─ swiftgen
 └─ swiftlint
+
+Docker
+└─ CocoaPods
 ```
 
 ## Usage
