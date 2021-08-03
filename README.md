@@ -3,6 +3,7 @@
 ## Requirements
 
 - Xcode 12.5.1 (12E507)
+- Docker
 
 ## Dependences
 
