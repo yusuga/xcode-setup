@@ -1,12 +1,21 @@
 default_platform(:ios)
 
 platform :ios do
+  BUILD_CONFIGS = {
+    "release" => {
+      provisioning_profile_specifier: "match AppStore com.yusuga.App"
+    }
+  }
+  
   before_all do
     setup_circle_ci
   end
   
   desc "Build"
-  lane :build do
+  lane :build do |options|
+    config = BUILD_CONFIGS[options[:configuration]]
+    
+    # @see https://docs.fastlane.tools/actions/match/
     match(
       type: 'appstore',
       git_url: 'git@github.com:yusuga/certificates.git',
@@ -14,6 +23,15 @@ platform :ios do
       readonly: true
     )
     
+    # @see https://docs.fastlane.tools/actions/update_code_signing_settings/
+    update_code_signing_settings(
+      path: "App/App.xcodeproj",
+      use_automatic_signing: false, 
+      code_sign_identity: "iPhone Distribution",
+      profile_name: config[:provisioning_profile_specifier],
+    )
+    
+    # @see https://docs.fastlane.tools/actions/build_app/
     build_app(
       workspace: "App/App.xcworkspace",
       scheme: "App",

@@ -27,3 +27,6 @@ _fastlane-match-init:
 
 _fastlane-match:
 	bundle exec --gemfile ${GEMFILE_PATH} fastlane match appstore
+
+_fastlane-build-release:
+	bundle exec --gemfile ${GEMFILE_PATH} fastlane build configuration:release

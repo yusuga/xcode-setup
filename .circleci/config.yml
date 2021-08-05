@@ -117,6 +117,10 @@ commands:
             - App/App.xcodeproj
             - App/App.xcworkspace
   build_app:
+    parameters:
+      configuration:
+        type: enum
+        enum: ["release"]
     steps:
       - checkout
       - attach_workspace:
@@ -125,7 +129,7 @@ commands:
           name: add github ip addresses to known hosts
           command: for ip in $(dig @8.8.8.8 github.com +short); do ssh-keyscan github.com,$ip; ssh-keyscan $ip; done 2>/dev/null >> ~/.ssh/known_hosts
       - run:
-          command: bundle exec fastlane build
+          command: bundle exec fastlane build configuration:<< parameters.configuration >>
           no_output_timeout: 1h
 
 jobs:
@@ -145,10 +149,11 @@ jobs:
     executor: machine_executor
     steps:
       - make_cocoapods
-  release_development:
+  build_app:
     executor: macos_executor
     steps:
-      - build_app
+      - build_app:
+          configuration: release
 
 workflows:
   version: 2
@@ -178,7 +183,7 @@ workflows:
                 - master
           requires:
             - resolve_app_dependencies_on_macos
-      - release_development:
+      - build_app:
           filters:
             branches:
               only:
