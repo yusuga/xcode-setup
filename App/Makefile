@@ -13,7 +13,7 @@ mint := MINT_PATH=${MINT_PATH} ${MINT_EXECUTABLE_FILE_PATH}
 mint-run := ${mint} run --mintfile ${MINTFILE_PATH}
 
 # https://hub.docker.com/r/renovate/cocoapods
-COCOAPODS_IMAGE_TAG := 1.10.1
+COCOAPODS_IMAGE_TAG := 1.11.2
 UID := $(shell id -u root)
 GID := $(shell id -g root)
 pod := docker run \
