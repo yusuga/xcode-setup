@@ -1,14 +1,14 @@
-APP_NAME := App
+PRODUCT_NAME := App
 
-DIR := $(shell dirname $(realpath $(firstword $(MAKEFILE_LIST))))
-MAKEFILE_PATH := ${DIR}/Makefile
-MINTFILE_PATH := ${DIR}/Mintfile
-MINT_PATH := ${DIR}/.mint/lib
-MINT_EXECUTABLE_FILE_PATH := ${DIR}/Mint/.build/apple/Products/Release/mint
+MAKEFILE_DIR := $(shell dirname $(realpath $(firstword $(MAKEFILE_LIST))))
+MAKEFILE_PATH := ${MAKEFILE_DIR}/Makefile
+MINTFILE_PATH := ${MAKEFILE_DIR}/Mintfile
+MINT_PATH := ${MAKEFILE_DIR}/.mint/lib
+MINT_EXECUTABLE_FILE_PATH := ${MAKEFILE_DIR}/Mint/.build/apple/Products/Release/mint
 USE_CACHE := false
 
 make := make -f ${MAKEFILE_PATH}
-make-mint := make -f ${DIR}/Mint/Makefile -C ${DIR}/Mint
+make-mint := make -f ${MAKEFILE_DIR}/Mint/Makefile -C ${MAKEFILE_DIR}/Mint
 mint := MINT_PATH=${MINT_PATH} ${MINT_EXECUTABLE_FILE_PATH}
 mint-run := ${mint} run --mintfile ${MINTFILE_PATH}
 
@@ -18,7 +18,7 @@ UID := $(shell id -u root)
 GID := $(shell id -g root)
 pod := docker run \
 	--rm \
-	-v ${DIR}:/local \
+	-v ${MAKEFILE_DIR}:/local \
 	-w /local \
 	-u $(UID):$(GID) \
 	renovate/cocoapods:${COCOAPODS_IMAGE_TAG} \
@@ -61,17 +61,17 @@ cocoapods:
 	${pod} install
 
 asset-files:
-	${mint-run} swiftgen config run --config ${DIR}/swiftgen.yml
+	${mint-run} swiftgen config run --config ${MAKEFILE_DIR}/swiftgen.yml
 
 xcodeproj:
-	${mint-run} xcodegen -s ${DIR}/project.yml
+	${mint-run} xcodegen -s ${MAKEFILE_DIR}/project.yml
 
 xcworkspace:
 	${make} xcodeproj
 	${make} cocoapods # Xcodeプロジェクトが生成された後に実行する必要がある
 
 open:
-	open ${DIR}/${APP_NAME}.xcworkspace
+	open ${MAKEFILE_DIR}/${PRODUCT_NAME}.xcworkspace
 
 clean:
 	${make} clean-tools
@@ -89,7 +89,7 @@ clean-app:
 
 clean-app-caches:
 	find ${HOME}/Library/Developer/Xcode/DerivedData \
-		-name ${APP_NAME}"*" \
+		-name ${PRODUCT_NAME}"*" \
 		-maxdepth 1 \
 		-print \
 		-type d \
