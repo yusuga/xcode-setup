@@ -31,12 +31,27 @@ platform :ios do
       profile_name: config[:provisioning_profile_specifier],
     )
     
-    # @see https://docs.fastlane.tools/actions/build_app/
-    build_app(
+    # @see https://docs.fastlane.tools/actions/gym/
+    gym(
       workspace: "App/App.xcworkspace",
       scheme: "App",
       configuration: "Release",
       codesigning_identity: "Apple Distribution: Yu Sugawara (R7YY29B6T8)",
+      clean: true,
+      disable_xcpretty: true
+    )
+  end
+  
+  lane :build_for_simulator do |options|
+    gym(
+      workspace: "App/App.xcworkspace",
+      scheme: "App",
+      configuration: "Development",
+      sdk: "iphonesimulator",
+      destination: "generic/platform=iOS Simulator",
+      derived_data_path: options[:derived_data_path],
+      skip_package_ipa: true,
+      skip_archive: true,
       clean: true,
       disable_xcpretty: true
     )

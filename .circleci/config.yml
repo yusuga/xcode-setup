@@ -6,6 +6,8 @@ executors:
     environment:
       LC_ALL: en_US.UTF-8
       LANG: en_US.UTF-8
+      DERIVED_DATA_PATH: DerivedData
+      OUTPUT_PATH: output
     shell: /bin/bash --login -eo pipefail
   machine_executor:
     machine:
@@ -131,6 +133,31 @@ commands:
       - run:
           command: bundle exec fastlane build configuration:<< parameters.configuration >>
           no_output_timeout: 1h
+  build_app_for_simulator:
+    steps:
+      - checkout
+      - attach_workspace:
+          at: .
+      - run:
+          name: add github ip addresses to known hosts
+          command: for ip in $(dig @8.8.8.8 github.com +short); do ssh-keyscan github.com,$ip; ssh-keyscan $ip; done 2>/dev/null >> ~/.ssh/known_hosts
+      - run: 
+          command: |
+            mkdir ${DERIVED_DATA_PATH}
+            mkdir ${OUTPUT_PATH}
+      - run:
+          command: bundle exec fastlane build_for_simulator derived_data_path:${DERIVED_DATA_PATH}
+          no_output_timeout: 1h
+      - run:
+          name: Compress app for storage
+          command: |
+            pushd "$(dirname "$(find ${DERIVED_DATA_PATH} -name \*.app -print -quit)")"
+            find . -type d -depth 1 -name \*.app -exec zip -r {}.zip {} \;
+            popd
+            mv DerivedData/Build/Products/Development-iphonesimulator/App_dev.app.zip ${OUTPUT_PATH}
+      - store_artifacts:
+          # Note: Environment variables are not available in store_artifacts
+          path: output
 
 jobs:
   resolve_deploy_tools:
@@ -154,6 +181,10 @@ jobs:
     steps:
       - build_app:
           configuration: release
+  build_app_for_simulator:
+    executor: macos_executor
+    steps:
+      - build_app_for_simulator
 
 workflows:
   version: 2
@@ -183,11 +214,19 @@ workflows:
                 - master
           requires:
             - resolve_app_dependencies_on_macos
-      - build_app:
+#       - build_app:
+#           filters:
+#             branches:
+#               only:
+#                 - master
+#           requires:
+#             - resolve_deploy_tools
+#             - resolve_app_dependencies_on_docker
+      - build_app_for_simulator:
           filters:
             branches:
               only:
                 - master
           requires:
             - resolve_deploy_tools
-            - resolve_app_dependencies_on_docker
+            - resolve_app_dependencies_on_docker            
