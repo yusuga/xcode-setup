@@ -1,0 +1,29 @@
+require 'uri'
+require 'net/http'
+require 'json'
+
+default_platform(:ios)
+
+platform :ios do
+  lane :magicpod_delete_all_apps do |options|
+    api_client_path = options[:api_client_path]
+    organization = ENV["MAGIC_POD_ORGANIZATION"]
+    project = ENV["MAGIC_POD_PROJECT"]
+    api_token = "Token " + ENV["MAGIC_POD_API_TOKEN"]
+    
+    uri = URI.parse("https://magic-pod.com/api/v1.0/#{organization}/#{project}/list-files/")
+    http = Net::HTTP.new(uri.host, uri.port)
+    http.use_ssl = uri.scheme === "https"
+    headers = { "Authorization" => api_token }
+    response = http.get(uri.path, headers)
+    json = JSON.parse(response.body)
+    
+    file_numbers = json["app_files"].map do |file|
+      file["app_file_number"]
+    end
+    
+    for file_number in file_numbers do
+      sh(api_client_path, "delete-app", "-a", file_number.to_s)
+    end
+  end
+end

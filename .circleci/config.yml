@@ -165,41 +165,37 @@ commands:
       - checkout
       - attach_workspace:
           at: .
-      - run:
-          ls ${OUTPUT_PATH}
       - restore_cache:
           name: Restoring magic-pod-api-client
-          key: magic-pod-api-client-linux-{{ .Environment.CACHE_VERSION }}-{{ .Environment.MAGIC_POD_API_CLIENT_VERSION }}
+          key: magic-pod-api-client-mac-{{ .Environment.CACHE_VERSION }}-{{ .Environment.MAGIC_POD_API_CLIENT_VERSION }}
       - run:
           name: GET magic-pod-api-client
           command: |
-            if [ ! -f linux64_magic-pod-api-client.zip ]; then
-              curl -L -O https://github.com/Magic-Pod/magic-pod-api-client/releases/download/${MAGIC_POD_API_CLIENT_VERSION}/linux64_magic-pod-api-client.zip
+            if [ ! -f mac64_magic-pod-api-client.zip ]; then
+              curl -L -O https://github.com/Magic-Pod/magic-pod-api-client/releases/download/${MAGIC_POD_API_CLIENT_VERSION}/mac64_magic-pod-api-client.zip
             fi
-            unzip linux64_magic-pod-api-client.zip
+            unzip mac64_magic-pod-api-client.zip
       - save_cache:
-          name: Saving magic-pod-api-client
-          key: magic-pod-api-client-linux-{{ .Environment.CACHE_VERSION }}-{{ .Environment.MAGIC_POD_API_CLIENT_VERSION }}
+          name: Saving mac64_magic-pod-api-client
+          key: magic-pod-api-client-mac-{{ .Environment.CACHE_VERSION }}-{{ .Environment.MAGIC_POD_API_CLIENT_VERSION }}
           paths:
-            - linux64_magic-pod-api-client.zip
+            - mac64_magic-pod-api-client.zip
+      - run:
+          name: Delete all apps from MagicPod
+          command:
+            bundle exec fastlane magicpod_delete_all_apps api_client_path:"$(pwd)"/magic-pod-api-client
       - run:
           # https://help.trident-qa.com/magic-pod-circleci/
           name: MagicPod E2E Test
           command: |
-            # 前回アップロードしたアプリを削除（`batch-run -n` だとアップロードしたアプリが溜まり続けるためこのタイミングで削除）
-            ./magic-pod-api-client delete-app -a 1 || true
-            
             # app/ipa/apkファイルをMagic Podにアップロードして、FILE_NOを取得
             FILE_NO=$(./magic-pod-api-client upload-app -a "$(find output -name \*.app -print -quit)")
-            BATCH_TEST_NUMBER=1
             
             # 先ほどアップロードしたアプリと、設定番号の設定を使ってテスト一括実行（`-n` で一括テスト結果を待たない)
-            ./magic-pod-api-client batch-run -s "{\"app_file_number\":\"${FILE_NO}\"}" -S ${BATCH_TEST_NUMBER} -n
-            
-            # テストが成功した場合はアップロードしたアプリは削除
-#             if [ $? = 0 ]; then
-#               ./magic-pod-api-client delete-app -a ${FILE_NO}
-#             fi
+            ./magic-pod-api-client batch-run \
+              -s "{\"app_file_number\":\"${FILE_NO}\"}" \
+              -S ${MAGIC_POD_BATCH_TEST_NUMBER} \
+              -n
 
 jobs:
   resolve_deploy_tools:
@@ -228,7 +224,7 @@ jobs:
     steps:
       - build_app_for_simulator
   magic-pod-e2e-test:
-    executor: machine_executor
+    executor: macos_executor
     steps:
       - magic-pod-e2e-test
 

@@ -16,11 +16,21 @@ or alternatively using `brew install fastlane`
 
 # Available Actions
 ## iOS
+### ios magicpod_delete_all_apps
+```
+fastlane ios magicpod_delete_all_apps
+```
+
 ### ios build
 ```
 fastlane ios build
 ```
 Build
+### ios build_for_simulator
+```
+fastlane ios build_for_simulator
+```
+
 
 ----
 
