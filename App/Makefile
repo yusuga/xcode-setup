@@ -80,6 +80,7 @@ clean:
 
 clean-tools:
 	rm -rf ${MAKEFILE_DIR}/.mint
+	rm -rf ${MAKEFILE_DIR}/Mint/.build
 
 clean-app:
 	rm -rf ${MAKEFILE_DIR}/${PRODUCT_NAME}.xcodeproj
