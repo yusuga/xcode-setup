@@ -1,9 +1,14 @@
-# xcode-setup
+# Example of building an Xcode project
 
 ## Requirements
 
-- Xcode 12.5.1 (12E507)
-- Docker
+- Xcode 13.1 (13A1030d)
+- [Docker Desktop for Mac](https://docs.docker.com/get-docker/)
+
+## Support architecture
+
+- x86_64 (including as emulated by Rosetta2)
+- arm64
 
 ## Dependences
 
