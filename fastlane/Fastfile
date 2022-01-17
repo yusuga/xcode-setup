@@ -1,11 +1,16 @@
 import './MagicPodFastfile'
 
 default_platform(:ios)
+xcodeproj = "App/App.xcodeproj"
+workspace = "App/App.xcworkspace"
+scheme = "App"
 
 platform :ios do
   BUILD_CONFIGS = {
     "release" => {
-      provisioning_profile_specifier: "match AppStore com.yusuga.App"
+      configuration: "Release",
+      codesigning_identity: "Apple Distribution: Yu Sugawara (R7YY29B6T8)",
+      profile_name: "match AppStore com.yusuga.App"
     }
   }
   
@@ -27,18 +32,21 @@ platform :ios do
     
     # @see https://docs.fastlane.tools/actions/update_code_signing_settings/
     update_code_signing_settings(
-      path: "App/App.xcodeproj",
-      use_automatic_signing: false, 
-      code_sign_identity: "iPhone Distribution",
-      profile_name: config[:provisioning_profile_specifier],
+      path: xcodeproj,
+      use_automatic_signing: false,
+      targets: [scheme],
+      build_configurations: config[:configuration],
+      code_sign_identity: config[:codesigning_identity],
+      profile_name: config[:profile_name],
     )
     
     # @see https://docs.fastlane.tools/actions/gym/
     gym(
-      workspace: "App/App.xcworkspace",
-      scheme: "App",
-      configuration: "Release",
-      codesigning_identity: "Apple Distribution: Yu Sugawara (R7YY29B6T8)",
+      workspace: workspace,
+      scheme: scheme,
+      configuration: config[:configuration],
+      codesigning_identity: config[:codesigning_identity],
+      output_directory: 'Build',
       clean: true,
       disable_xcpretty: true
     )
@@ -46,8 +54,8 @@ platform :ios do
   
   lane :build_for_simulator do |options|
     gym(
-      workspace: "App/App.xcworkspace",
-      scheme: "App",
+      workspace: workspace,
+      scheme: scheme,
       configuration: "Development",
       sdk: "iphonesimulator",
       destination: "generic/platform=iOS Simulator",

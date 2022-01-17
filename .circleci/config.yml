@@ -118,7 +118,7 @@ commands:
             - App/Pods
             - App/App.xcodeproj
             - App/App.xcworkspace
-  build_app:
+  build:
     parameters:
       configuration:
         type: enum
@@ -128,12 +128,35 @@ commands:
       - attach_workspace:
           at: .
       - run:
+          name: Create APP_DATE
+          command: |
+            #!/bin/bash --login -eo pipefail
+            echo "export APP_DATE="`TZ=Asia/Tokyo date +'%Y%m%d-%H%M%S'` >> $BASH_ENV
+            source $BASH_ENV
+            # Workflow間での環境変数の受け渡しが分からなかったため、ファイルに書き出し
+            echo $APP_DATE >> App/APP_DATE
+      - run:
           name: add github ip addresses to known hosts
           command: for ip in $(dig @8.8.8.8 github.com +short); do ssh-keyscan github.com,$ip; ssh-keyscan $ip; done 2>/dev/null >> ~/.ssh/known_hosts
-      - run:
-          command: bundle exec fastlane build configuration:<< parameters.configuration >>
-          no_output_timeout: 1h
-  build_app_for_simulator:
+#       - run:
+#           command: bundle exec fastlane build configuration:<< parameters.configuration >>
+#           no_output_timeout: 1h
+      - persist_to_workspace:
+          root: .
+          paths:
+             - App/APP_DATE
+  deploy:
+    parameters:
+      configuration:
+        type: enum
+        enum: ["release"]
+    steps:
+      - checkout
+      - attach_workspace:
+          at: .
+      - run: |
+          cat App/APP_DATE
+  build_for_simulator:
     steps:
       - checkout
       - attach_workspace:
@@ -214,15 +237,20 @@ jobs:
     executor: machine_executor
     steps:
       - make_cocoapods
-  build_app:
+  build:
     executor: macos_executor
     steps:
-      - build_app:
+      - build:
           configuration: release
-  build_app_for_simulator:
+  deploy:
+    executor: machine_executor
+    steps:
+      - deploy:
+          configuration: release
+  build_for_simulator:
     executor: macos_executor
     steps:
-      - build_app_for_simulator
+      - build_for_simulator
   magic-pod-e2e-test:
     executor: macos_executor
     steps:
@@ -256,15 +284,7 @@ workflows:
                 - master
           requires:
             - resolve_app_dependencies_on_macos
-#       - build_app:
-#           filters:
-#             branches:
-#               only:
-#                 - master
-#           requires:
-#             - resolve_deploy_tools
-#             - resolve_app_dependencies_on_docker
-      - build_app_for_simulator:
+      - build:
           filters:
             branches:
               only:
@@ -272,10 +292,33 @@ workflows:
           requires:
             - resolve_deploy_tools
             - resolve_app_dependencies_on_docker
-      - magic-pod-e2e-test:
+      - approval_deploy:
+          type: approval
           filters:
             branches:
               only:
                 - master
           requires:
-            - build_app_for_simulator
+            - build
+      - deploy:
+          filters:
+            branches:
+              only:
+                - master
+          requires:
+            - approval_deploy
+#       - build_for_simulator:
+#           filters:
+#             branches:
+#               only:
+#                 - master
+#           requires:
+#             - resolve_deploy_tools
+#             - resolve_app_dependencies_on_docker
+#       - magic-pod-e2e-test:
+#           filters:
+#             branches:
+#               only:
+#                 - master
+#           requires:
+#             - build_for_simulator
