@@ -2,7 +2,7 @@
 
 ## Requirements
 
-- Xcode 13.1 (13A1030d)
+- Xcode 13.4.1 (13F100)
 - [Docker Desktop for Mac](https://docs.docker.com/get-docker/)
 
 ## Support architecture

@@ -24,7 +24,7 @@ settings:
     SWIFT_VERSION: 5.0
     FRAMEWORK_SEARCH_PATHS:
     - $(inherited)
-    - $(PROJECT_DIR)/Carthage/Build/iOS
+    - $(PROJECT_DIR)/Carthage/Build
     SWIFT_COMPILATION_MODE: wholemodule
     DEBUG_INFORMATION_FORMAT: dwarf-with-dsym
     MTL_FAST_MATH: YES
@@ -90,8 +90,8 @@ targets:
     postbuildScripts:
     - name: SwiftLint
       script: |
-              if Mint/.build/apple/Products/Release/mint which swiftlint >/dev/null; then
-                Mint/.build/apple/Products/Release/mint run swiftlint --strict
+              if make mint_which OPTIONS='swiftlint' >/dev/null; then
+                make mint_run OPTIONS='swiftlint --strict'
               else
                 echo "warning: SwiftLint not installed, download from https://github.com/realm/SwiftLint"
               fi

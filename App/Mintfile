@@ -1,4 +1,4 @@
 carthage/carthage@0.38.0
 yonaskolb/xcodegen@2.25.0
-swiftgen/swiftgen@6.5.1
-realm/swiftlint@0.45.0
+swiftgen/swiftgen@6.6.2
+realm/swiftlint@0.49.0
