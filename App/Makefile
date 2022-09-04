@@ -32,7 +32,7 @@ pod := docker run \
 .PHONY: app app_using_cache
 .PHONY: mint mint_which mint_run mint_execute
 .PHONY: carthage cocoapods 
-.PHONY: asset_files xcodeproj spm xcworkspace open 
+.PHONY: asset_files xcodeproj spm open 
 .PHONY: clean clean_tools clean_app clean_app_caches
 .PHONY: _update_carthage _update_cocoapods
 
@@ -43,9 +43,8 @@ app:
 	$(make) carthage
 	$(make) asset_files
 	$(make) xcodeproj
-	$(make) cocoapods
 	$(make) spm
-	$(make) xcworkspace
+	$(make) cocoapods
 	$(make) open
 
 app_using_cache:
@@ -53,6 +52,9 @@ app_using_cache:
 
 mint:
 	$(mint) bootstrap --mintfile $(MINTFILE_PATH)
+
+mint_list:
+	$(mint) list
 
 mint_which:
 	$(make) mint_execute COMMAND='which'
@@ -62,36 +64,45 @@ mint_run:
 
 mint_execute:
 ifndef COMMAND
-	@echo "make mint_execute COMMAND=<コマンドを指定してください>\n例: make mint_execute COMMAND=run"
-	@exit 1
+	$(error "COMMAND not found. e.g. `make mint_execute COMMAND=run`")
 endif
 ifndef OPTIONS
-	@echo "make mint_execute $(COMMAND) OPTIONS=<オプションを指定してください>\n例: make mint_execute COMMAND=run OPTIONS=xcodegen"
-	@exit 1
+	$(error "OPTIONS not found. e.g. `make mint_execute COMMAND=run OPTIONS='swiftlint --strict'`")
 endif
 	$(mint) $(COMMAND) --mintfile $(MINTFILE_PATH) $(OPTIONS)
 
 carthage:
 ifeq ($(USE_CACHE),true)
-	$(mint_run) carthage bootstrap --platform iOS --no-use-binaries --use-xcframeworks --cache-builds
+	$(mint_run) carthage bootstrap \
+		--platform iOS \
+		--no-use-binaries \
+		--use-xcframeworks \
+		--cache-builds
 else
-	$(mint_run) carthage bootstrap --platform iOS --no-use-binaries --use-xcframeworks
+	$(mint_run) carthage bootstrap \
+		--platform iOS \
+		--no-use-binaries \
+		--use-xcframeworks
 endif
 
 cocoapods:
+ifeq ("$(wildcard $(XCODEPROJ_PATH))", "")
+	$(error $(XCODEPROJ_PATH) not found)
+endif
 	$(pod) install
 
 asset_files:
-	$(mint_run) swiftgen config run --config $(MAKEFILE_DIR)/swiftgen.yml
+	$(mint_run) swiftgen config run \
+		--config $(MAKEFILE_DIR)/swiftgen.yml
 
 xcodeproj:
-	$(mint_run) xcodegen -s $(MAKEFILE_DIR)/project.yml
+	$(mint_run) xcodegen \
+		-s $(MAKEFILE_DIR)/project.yml
 
 spm:
-	xcodebuild -project $(XCODEPROJ_PATH) -scheme $(SCHEME_NAME) -resolvePackageDependencies
-
-xcworkspace:
-	$(make) cocoapods # Xcodeプロジェクトが生成された後に実行する必要がある
+	xcodebuild -project $(XCODEPROJ_PATH) \
+		-scheme $(SCHEME_NAME) \
+		-resolvePackageDependencies
 
 open:
 	xed $(MAKEFILE_DIR)
@@ -122,15 +133,13 @@ clean_app_caches:
 
 _update_carthage:
 ifndef L
-	@echo "make _update_carthage L=<LIBRARY_NAME>"
-	@exit 1
+	$(error "L not found. e.g. `make _update_carthage L=SwiftyUserDefaults`")
 endif
 	$(mint_run) carthage update --use-ssh --no-build $(L)
 	$(make) app_using_cache
 
 _update_cocoapods:
 ifndef L
-	@echo "make _update_cocoapods L=<LIBRARY_NAME>"
-	@exit 1
+	$(error "L not found. e.g. `make _update_cocoapods L=SwiftyJSON`")
 endif
 	$(pod) update $(L)
